@@ -7,26 +7,41 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*", // อนุญาตให้อุปกรณ์อื่นๆ (เช่น มือถือลูกค้า) เข้าถึงได้
+        origin: "*", 
         methods: ["GET", "POST"]
     }
 });
 
-const PORT = 3000;
+// ใช้พอร์ตที่ Render กำหนดให้ หรือใช้ 3000 เป็นค่าเริ่มต้นสำหรับรันในเครื่อง (Local)
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// เสิร์ฟไฟล์หน้าเว็บ (ถ้าคุณเอาไฟล์ html ไปใส่ในโฟลเดอร์ public)
+// 1. ตรวจสอบให้มั่นใจว่าโฟลเดอร์ชื่อ 'public' อยู่ระดับเดียวกับ server.js 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// สแตนด์บายรับการเชื่อมต่อจากลูกค้าและห้องครัว
+// 2. เพิ่ม Route สำหรับหน้าจอห้องครัวโดยเจาะจง (แก้ปัญหา Cannot GET /Kitchen.html)
+app.get('/Kitchen.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Kitchen.html'));
+});
+
+// 3. เพิ่ม Route สำหรับหน้าโต๊ะอาหารต่างๆ (เลือกทำแบบ Dynamic รองรับ table1.html ถึง table10.html)
+app.get('/table:num.html', (req, res) => {
+    const tableNum = req.params.num;
+    res.sendFile(path.join(__dirname, 'public', `table${tableNum}.html`));
+});
+
+// 4. หน้าแรกสุด (http://localhost:3000/) เผื่อกรณีเข้าลิงก์หลัก ให้ส่งหน้าโต๊ะ 1 หรือหน้าต้อนรับไปก่อน
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'table1.html'));
+});
+
+// ระบบ Socket.io สำหรับสื่อสารแบบ Real-time
 io.on('connection', (socket) => {
     console.log('⚡ มีผู้ใช้งานเชื่อมต่อเข้ามา:', socket.id);
 
-    // เมื่อมีออเดอร์ใหม่ส่งมาจากฝั่งลูกค้า
     socket.on('new_order', (orderData) => {
         console.log(`📦 ออเดอร์ใหม่จาก ${orderData.table}!`);
-        // ส่งออเดอร์นั้นต่อไปให้หน้าจอฝั่งห้องครัวทันที
         io.emit('kitchen_receive', orderData);
     });
 
@@ -38,7 +53,7 @@ io.on('connection', (socket) => {
 // เริ่มต้นเซิร์ฟเวอร์
 server.listen(PORT, () => {
     console.log(`==================================================`);
-    console.log(`🍲 ระบบชาบู มียู พร้อมใช้งานแล้ว!`);
-    console.log(`🚀 เซิร์ฟเวอร์ทำงานที่: http://localhost:${PORT}`);
+    console.log(`🍲 ระบบชาบู มียู บน Render พร้อมใช้งานแล้ว!`);
+    console.log(`🚀 เซิร์ฟเวอร์ทำงานที่พอร์ต: ${PORT}`);
     console.log(`==================================================`);
 });

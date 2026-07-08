@@ -5,42 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบรับออเดอร์ห้องครัว (Kitchen Dashboard)</title>
     <style>
-        :root { --primary-color: #2c3e50; --accent-color: #e67e22; --bg-color: #ecf0f1; --card-bg: #ffffff; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; }
-        h1 { text-align: center; color: var(--primary-color); }
-        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
-        .order-card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid var(--accent-color); padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
-        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #eee; padding-bottom: 10px; margin-bottom: 10px; }
-        .table-num { font-size: 1.4rem; font-weight: bold; color: #c0392b; }
-        .food-list { list-style: none; padding: 0; margin: 0 0 15px 0; flex-grow: 1; }
-        .food-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #f1f1f1; }
-        .food-qty { font-weight: bold; color: #2e7d32; font-size: 1.1rem; }
-        .btn-complete { background-color: #2ecc71; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; }
-        .btn-complete:hover { background-color: #27ae60; }
+        :root { 
+            --primary-color: #2c3e50; 
+            --accent-color: #e67e22; 
+            --bg-color: #ecf0f1; 
+            --card-bg: #ffffff; 
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            padding: 20px; 
+        }
+        h1 { 
+            text-align: center; 
+            color: var(--primary-color); 
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+        .orders-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 20px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        .order-card { 
+            background: var(--card-bg); 
+            border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            border-top: 5px solid var(--accent-color); 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+        }
+        .order-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px dashed #eee; 
+            padding-bottom: 10px; 
+            margin-bottom: 10px; 
+        }
+        .table-num { 
+            font-size: 1.4rem; 
+            font-weight: bold; 
+            color: #c0392b; 
+        }
+        .food-list { 
+            list-style: none; 
+            padding: 0; 
+            margin: 0 0 15px 0; 
+            flex-grow: 1; 
+        }
+        .food-item { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 6px 0; 
+            border-bottom: 1px dashed #f1f1f1; 
+        }
+        .food-qty { 
+            font-weight: bold; 
+            color: #2e7d32; 
+            font-size: 1.1rem; 
+        }
+        .btn-complete { 
+            background-color: #2ecc71; 
+            color: white; 
+            border: none; 
+            padding: 10px; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            width: 100%; 
+            font-size: 0.95rem;
+        }
+        .btn-complete:hover { 
+            background-color: #27ae60; 
+        }
     </style>
 </head>
 <body>
 
     <h1>👨‍🍳 รายการส่งอาหารเข้าครัว (Live Tracker)</h1>
+    <p class="subtitle">ระบบจะอัปเดตอัตโนมัติเมื่อมีออเดอร์ใหม่จากโต๊ะ 1 - 10</p>
 
     <div class="orders-grid" id="orders-container"></div>
 
     <script>
         function renderOrders() {
             const container = document.getElementById('orders-container');
+            // ดึงข้อมูลออเดอร์จาก localStorage คีย์ 'hotpot_orders' เดียวกันกับที่ฝั่งโต๊ะลูกค้าบันทึกข้อมูลเข้ามารวมกัน
             const orders = JSON.parse(localStorage.getItem('hotpot_orders')) || [];
 
             if (orders.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color:#7f8c8d;">📭 ไม่มีออเดอร์ค้างในระบบคราบ...</div>';
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color:#7f8c8d; padding: 40px; font-size: 1.2rem;">📭 ไม่มีออเดอร์ค้างในระบบครับ...</div>';
                 return;
             }
 
-            container.innerHTML = orders.map(order => `
+            // จัดเรียงให้ออเดอร์ที่เข้ามาก่อน (id น้อยกว่า) อยู่ด้านบน/ด้านหน้า เพื่อให้ครัวทำตามคิว
+            const sortedOrders = orders.sort((a, b) => a.id - b.id);
+
+            container.innerHTML = sortedOrders.map(order => `
                 <div class="order-card">
                     <div>
                         <div class="order-header">
                             <span class="table-num">📍 ${order.table}</span>
-                            <span style="color: #7f8c8d;">🕒 ${order.time}</span>
+                            <span style="color: #7f8c8d; font-weight: bold;">🕒 ${order.time} น.</span>
                         </div>
                         <ul class="food-list">
                             ${order.foods.map(food => `
@@ -58,16 +136,23 @@
 
         function completeOrder(orderId) {
             let orders = JSON.parse(localStorage.getItem('hotpot_orders')) || [];
+            // ลบออเดอร์ที่ทำเสร็จแล้วออกจากระบบ
             orders = orders.filter(order => order.id !== orderId);
             localStorage.setItem('hotpot_orders', JSON.stringify(orders));
             renderOrders();
         }
 
-        // Live native listening without network backend configuration needed
+        // 1. ดักจับแบบ Real-time ข้ามแท็บ/ข้ามหน้าต่างเบราว์เซอร์ (Event Storage)
         window.addEventListener('storage', (e) => {
-            if (e.key === 'hotpot_orders') renderOrders();
+            if (e.key === 'hotpot_orders') {
+                renderOrders();
+            }
         });
 
+        // 2. ตั้งเวลาดึงข้อมูลซ้ำทุกๆ 2 วินาที (Fallback Auto-Refresh เผื่อกรณีรันบนระบบทดสอบบางประเภท)
+        setInterval(renderOrders, 2000);
+
+        // เรียกทำงานทันทีเมื่อเปิดหน้าจอครัว
         renderOrders();
     </script>
 </body>
